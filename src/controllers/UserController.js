@@ -11,6 +11,51 @@ const fs = require('fs-extra');
 
 
 // Função para manipular o upload de imagens e atualizar o usuário
+// const uploadImage = async (req, res) => {
+//     try {
+//         const buffer = req.file.buffer;
+
+//         // Realizar o recorte em um quadrado
+//         const croppedBuffer = await sharp(buffer)
+//             .resize(400, 400, {
+//                 fit: sharp.fit.cover,
+//                 position: sharp.strategy.entropy
+//             })
+//             .toBuffer();
+
+//         // Salvar apenas o cropped em um arquivo
+//         const fileName = 'cropped-' + Date.now() + '-' + req.file.originalname;
+//         await sharp(croppedBuffer).toFile('uploads/' + fileName);
+
+//         // Recuperar o usuário existente
+//         const userId = req.body.userId;
+//         const usuario = await User.findByPk(userId);
+
+//         if (!usuario) {
+//             return res.status(404).send('Usuário não encontrado.');
+//         }
+
+//         if (usuario.photo && usuario.photo != 'foto-perfil.png') {
+//             const imagePath = 'uploads/' + usuario.photo;
+//             fs.remove(imagePath)
+//                 .then(() => {
+//                     console.log('Arquivo anterior excluído com sucesso');
+//                 })
+//                 .catch((error) => {
+//                     console.error('Erro ao excluir o arquivo anterior:', error);
+//                 });
+//         }
+
+//         // Atualizar o campo de imagem do usuário
+//         usuario.photo = fileName;
+//         await usuario.save();
+
+//         res.send('Arquivo enviado, cortado em quadrado e redimensionado com sucesso!');
+//     } catch (error) {
+//         res.status(500).send('Erro ao processar o arquivo.');
+//     }
+// };
+
 const uploadImage = async (req, res) => {
     try {
         const buffer = req.file.buffer;
@@ -19,35 +64,18 @@ const uploadImage = async (req, res) => {
         const croppedBuffer = await sharp(buffer)
             .resize(400, 400, {
                 fit: sharp.fit.cover,
-                position: sharp.strategy.entropy
+                position: sharp.strategy.entropy,
             })
             .toBuffer();
 
-        // Salvar apenas o cropped em um arquivo
-        const fileName = 'cropped-' + Date.now() + '-' + req.file.originalname;
-        await sharp(croppedBuffer).toFile('uploads/' + fileName);
-
-        // Recuperar o usuário existente
-        const userId = req.body.userId;
-        const usuario = await User.findByPk(userId);
-
+        // Salvar apenas o cropped em uma variável buffer
+        const usuario = await User.findByPk(req.body.userId);
         if (!usuario) {
             return res.status(404).send('Usuário não encontrado.');
         }
 
-        if (usuario.photo && usuario.photo != 'foto-perfil.png') {
-            const imagePath = 'uploads/' + usuario.photo;
-            fs.remove(imagePath)
-                .then(() => {
-                    console.log('Arquivo anterior excluído com sucesso');
-                })
-                .catch((error) => {
-                    console.error('Erro ao excluir o arquivo anterior:', error);
-                });
-        }
-
-        // Atualizar o campo de imagem do usuário
-        usuario.photo = fileName;
+        // Atualizar o campo de imagem do usuário com o buffer da imagem
+        usuario.photo = croppedBuffer;
         await usuario.save();
 
         res.send('Arquivo enviado, cortado em quadrado e redimensionado com sucesso!');
@@ -87,7 +115,7 @@ const create = async (req, res) => {
             email: req.body.email,
             name: req.body.name,
             username: req.body.username,
-            photo: 'foto-perfil.png',
+            // photo: 'foto-perfil.png',
             hash,
             salt
         };
@@ -159,53 +187,137 @@ const checkEmail = async (req, res) => {
     }
 };
 
+// const updateWithImage = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const [updated] = await User.update(req.body, { where: { id: id } });
+
+
+
+
+
+//         const buffer = req.file.buffer;
+
+//         // Realizar o recorte em um quadrado
+//         const croppedBuffer = await sharp(buffer)
+//             .resize(400, 400, {
+//                 fit: sharp.fit.cover,
+//                 position: sharp.strategy.entropy
+//             })
+//             .toBuffer();
+
+//         // Salvar apenas o cropped em um arquivo
+//         const fileName = 'cropped-' + Date.now() + '-' + req.file.originalname;
+//         await sharp(croppedBuffer).toFile('uploads/' + fileName);
+
+//         // Recuperar o usuário existente
+
+
+//         console.log('passou aqui')
+
+//         // Atualizar o campo de imagem do usuário
+//         if (updated) {
+//             const user = await User.findByPk(id);
+//             const updatedWithImage = await User.update({photo: fileName}, { where: { id: id } });
+//             if (updatedWithImage) {
+//                 return res.status(200).send(user);
+//             }
+
+//             // user.photo = fileName;
+//             // await user.save();
+
+//         }
+
+
+
+//     } catch (err) {
+//         res.status(500).json({ error: err });
+//     }
+// };
+
 const updateWithImage = async (req, res) => {
     try {
         const { id } = req.params;
-        const [updated] = await User.update(req.body, { where: { id: id } });
-        
 
+        const buffer = req.file ? req.file.buffer : null;
+        const hasOtherFields = Object.keys(req.body).length > 0;
 
-
-
-        const buffer = req.file.buffer;
-
-        // Realizar o recorte em um quadrado
-        const croppedBuffer = await sharp(buffer)
-            .resize(400, 400, {
-                fit: sharp.fit.cover,
-                position: sharp.strategy.entropy
-            })
-            .toBuffer();
-
-        // Salvar apenas o cropped em um arquivo
-        const fileName = 'cropped-' + Date.now() + '-' + req.file.originalname;
-        await sharp(croppedBuffer).toFile('uploads/' + fileName);
-
-        // Recuperar o usuário existente
-
-
-        console.log('passou aqui')
-
-        // Atualizar o campo de imagem do usuário
-        if (updated) {
-            const user = await User.findByPk(id);
-            const updatedWithImage = await User.update({photo: fileName}, { where: { id: id } });
-            if (updatedWithImage) {
-                return res.status(200).send(user);
+        if (buffer || hasOtherFields) {
+            // Realizar o recorte em um quadrado, caso tenha um arquivo
+            let croppedBuffer = null;
+            if (buffer) {
+                croppedBuffer = await sharp(buffer)
+                    .resize(400, 400, {
+                        fit: sharp.fit.cover,
+                        position: sharp.strategy.entropy
+                    })
+                    .toBuffer();
             }
-           
-            // user.photo = fileName;
-            // await user.save();
-            
+
+            // Atualizar o campo de imagem do usuário, se houver um arquivo
+            if (buffer) {
+                await User.update({ photo: croppedBuffer }, { where: { id: id } });
+            }
+
+            // Atualizar outros campos do usuário, se houver
+            if (hasOtherFields) {
+                await User.update(req.body, { where: { id: id } });
+            }
+
+            const user = await User.findByPk(id);
+            if (user) {
+                return res.status(200).send('FOI');
+            }
+        } else {
+            // Nenhum arquivo ou campos adicionais foram enviados
+            return res.status(400).json({ error: 'Nenhum arquivo ou campos adicionais foram fornecidos.' });
         }
-       
-
-
     } catch (err) {
         res.status(500).json({ error: err });
     }
 };
+
+
+
+
+// const updateWithImage = async (req, res) => {
+//     try {
+//       const { id } = req.params;
+//       const [updated] = await User.update(req.body, { where: { id: id } });
+  
+//     //   console.log(req.body);
+  
+//     //   console.log(req.file);
+//       if (req.file) {
+//         console.log('req file' + req.file);
+//         const buffer = req.file.buffer;
+  
+//         // Atualizar o campo de imagem do usuário com o buffer da imagem
+//         if (updated > 0) {
+//           const updatedWithImage = await User.update({ photo: buffer }, { where: { id: id } });
+//           if (updatedWithImage) {
+//             const user = await User.findByPk(id);
+//             return res.status(200).send('FOI');
+//           }
+//         }
+//       }
+  
+//       // Se não houver upload de imagem, continuar com a atualização sem modificar o campo photo
+  
+//       const user = await User.findByPk(id);
+//       if (user) {
+//         return res.status(200).send('FOI');
+//       } else {
+//         return res.status(404).send('Usuário não encontrado.');
+//       }
+//     } catch (err) {
+//       res.status(500).json({ error: err });
+//     }
+//   };
+  
+  
+  
+
 
 
 

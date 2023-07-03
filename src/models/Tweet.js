@@ -9,8 +9,9 @@ const Tweet = sequelize.define('Tweet', {
     },
 
     tweetPhoto: {
-        type: DataTypes.STRING,
-    },
+        type: DataTypes.BLOB,
+        allowNull: true,
+      },
 
     timeElapsed: { 
         type: DataTypes.STRING 

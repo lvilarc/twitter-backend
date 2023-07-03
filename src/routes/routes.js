@@ -14,17 +14,29 @@ const AuthController = require('../controllers/AuthController');
 const router = Router();
 
 
+// const storage = multer.memoryStorage();
+// const upload = multer({
+//     storage: storage,
+//     fileFilter: function (req, file, cb) {
+//       if (file.mimetype.startsWith('image/')) {
+//         cb(null, true);
+//       } else {
+//         cb(new Error('O arquivo enviado não é uma imagem.'));
+//       }
+//     }
+//   });
+
 const storage = multer.memoryStorage();
 const upload = multer({
-    storage: storage,
-    fileFilter: function (req, file, cb) {
-      if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-      } else {
-        cb(new Error('O arquivo enviado não é uma imagem.'));
-      }
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('O arquivo enviado não é uma imagem.'));
     }
-  });
+  }
+});
 
 // Auth
 router.use('/auth', passport.authenticate('jwt', { session: false }));

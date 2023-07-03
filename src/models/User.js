@@ -23,7 +23,8 @@ const User = sequelize.define('User', {
     },
 
     photo: {
-        type: DataTypes.STRING,
+        type: DataTypes.BLOB('long'),
+        allowNull: true,
     },
 
     hash: {
@@ -38,7 +39,7 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING(1234)
     },
 
-    
+
 
 },
     {

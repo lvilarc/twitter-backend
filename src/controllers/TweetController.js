@@ -83,50 +83,81 @@ const create = async (req, res) => {
     }
 }
 
+// const createWithImage = async (req, res) => {
+//     try {
+//         const { userId } = req.params;
+//         const tweet = await Tweet.create(req.body);
+
+
+
+//         const buffer = req.file.buffer;
+
+//         // Realizar o recorte em um quadrado
+//         const croppedBuffer = await sharp(buffer)
+//             .resize(500, null, {  
+//                 fit: sharp.fit.cover,
+//                 position: sharp.strategy.entropy
+//             })
+//             .toBuffer();
+
+//         // Salvar apenas o cropped em um arquivo
+//         const fileName = 'cropped-' + Date.now() + '-' + req.file.originalname;
+//         await sharp(croppedBuffer).toFile('uploads/' + fileName);
+
+//         // Recuperar o usuário existente
+
+
+
+
+//         // Atualizar o campo de imagem do usuário
+//         tweet.tweetPhoto = fileName;
+//         const user = await User.findByPk(userId);
+
+//         await tweet.setUser(user);
+//         await tweet.save();
+
+
+
+
+
+
+
+//         return res.status(200).json({ tweet });
+//     } catch (err) {
+//         res.status(500).json({ error: err });
+//     }
+// };
+
 const createWithImage = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const tweet = await Tweet.create(req.body);
-
-
-
+      const { userId } = req.params;
+      const tweet = await Tweet.create(req.body);
+  
+      if (req.file) {
         const buffer = req.file.buffer;
-
+  
         // Realizar o recorte em um quadrado
         const croppedBuffer = await sharp(buffer)
-            .resize(500, null, {  
-                fit: sharp.fit.cover,
-                position: sharp.strategy.entropy
-            })
-            .toBuffer();
-
-        // Salvar apenas o cropped em um arquivo
-        const fileName = 'cropped-' + Date.now() + '-' + req.file.originalname;
-        await sharp(croppedBuffer).toFile('uploads/' + fileName);
-
-        // Recuperar o usuário existente
-
-
-
-
-        // Atualizar o campo de imagem do usuário
-        tweet.tweetPhoto = fileName;
+          .resize(500, null, {
+            fit: sharp.fit.cover,
+            position: sharp.strategy.entropy,
+          })
+          .toBuffer();
+  
+        // Atualizar o campo de imagem do tweet com o buffer da imagem
+        tweet.tweetPhoto = croppedBuffer;
+  
         const user = await User.findByPk(userId);
-
         await tweet.setUser(user);
         await tweet.save();
-
-
-
-
-
-
-
-        return res.status(200).json({ tweet });
+      }
+  
+      return res.status(200).json({ tweet });
     } catch (err) {
-        res.status(500).json({ error: err });
+      res.status(500).json({ error: err });
     }
-};
+  };
+  
 
 const update = async (req, res) => {
     const { id } = req.params;
